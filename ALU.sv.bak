@@ -1,0 +1,26 @@
+module ALU(
+    input  logic [3:0]           ALUop, 
+    input  logic signed [31:0]   x,
+    input  logic signed [31:0]   y,
+    output  logic signed [31:0]  result,
+    output                 flag
+);
+    assign flag = 0;
+    always_comb begin
+        case (ALUop)
+            4'b0000: result = x & y; 
+            4'b0001: result = x | y;
+            4'b0010: result = x ^ y;
+            4'b0011: result = x + y;
+            4'b0100: result = x - y;
+            4'b0101: result = x * y;
+            4'b0110: result = x >> y;//srl
+            4'b0111: result = x << y;//sll
+            4'b1000: begin flag = ((x == y)?1'b1:1'b0);result = ((x == y)?1'b1 : 1'b0);end//beq
+            4'b1001: flag = ((x != y)?1 : 0);//bnq
+            4'b1010: begin flag = ((x < y)?1:0);result = ((x < y)?1'b1 : 1'b0);end //blt,slt,slti
+            4'b1011: flag = ((x >= y)?1 : 0);//bge
+            default: begin result = 32'h0000_0000;flag = 1'b0;end
+        endcase
+    end
+endmodule

@@ -1,0 +1,53 @@
+module controlUnit(
+    input logic [31:0] instruction,
+    output logic memToReg, memWrite, branch, isImm, we_reg,
+    output logic [3:0] ALUop
+);
+    logic [6:0] opcode = instruction[6:0];
+    logic [2:0] funct3 = instruction[14:12];
+    logic [6:0] funct7 = instruction[31:25];
+    assign memToReg = 0;assign memWrite = 0;assign branch = 0;assign isImm = 0;assign we_reg = 0;
+    assign ALUop = 4'b1111;
+    always_comb begin
+        case (opcode)
+            7'b1100011: begin 
+                        branch = 1;
+                        if(funct3 == 3'b000)begin assign ALUop = 4'b1000;end //beq
+                        else if(funct3 == 3'b001)begin assign ALUop = 4'b1001;end //bne
+                        else if(funct3 == 3'b100)begin assign ALUop = 4'b1010;end //blt
+                        else if(funct3 == 3'b101)begin assign ALUop = 4'b1011;end //bge
+                        else begin assign ALUop = 4'b1111;end
+                        end//BRANCH系命令
+            7'b0000011: begin we_reg = 1;isImm = 1;ALUop = 4'b0011;end//LOAD系命令
+            7'b0100011: begin memWrite = 1;isImm = 1;ALUop = 4'b0011;end//STORE系命令
+            7'b0010011: begin 
+                            isImm = 1;
+                            memToReg = 1;
+                            we_reg = 1;
+                            if(funct3 == 3'b000) begin assign ALUop = 4'b0011;end//addi 
+                            else if(funct3 == 3'b001)begin assign ALUop = 4'b0111;end//slli
+                            else if(funct3 == 3'b010)begin assign ALUop = 4'b1010;end//slti 
+                            else if(funct3 == 3'b101)begin assign ALUop = 4'b0110;end//srli
+                            else if(funct3 == 3'b100)begin assign ALUop = 4'b0010;end//xori 
+                            else if(funct3 == 3'b110)begin assign ALUop = 4'b0001;end//ori 
+                            else if(funct3 == 3'b111)begin assign ALUop = 4'b0000;end//andi 
+                            else begin assign ALUop = 4'b1111;end
+                        end
+            //即値演算命令
+            7'b0110011: begin 
+                            memToReg = 1;
+                            we_reg = 1;
+                            if(funct3 == 3'b000 && funct7 == 7'b0000_000)begin assign ALUop = 4'b0011; end//add
+                            else if(funct3 == 3'b000 && funct7 == 7'b0100_000)begin assign ALUop = 4'b0100; end//sub
+                            else if(funct3 == 3'b001 && funct7 == 7'b0000_000)begin assign ALUop = 4'b0111; end//sll
+                            else if(funct3 == 3'b010 && funct7 == 7'b0000_000)begin assign ALUop = 4'b1010; end//slt
+                            else if(funct3 == 3'b100 && funct7 == 7'b0000_000)begin assign ALUop = 4'b0010; end//xor
+                            else if(funct3 == 3'b101 && funct7 == 7'b0000_000)begin assign ALUop = 4'b0001; end//srl
+                            else if(funct3 == 3'b110 && funct7 == 7'b0000_000)begin assign ALUop = 4'b0001; end//or
+                            else if(funct3 == 3'b111 && funct7 == 7'b0000_000)begin assign ALUop = 4'b0010; end//xor
+                            else begin assign ALUop = 4'b1111;end
+                        end//演算命令
+            default: begin memToReg = 0; memWrite = 0; branch = 0; isImm = 0; we_reg = 0;ALUop = 4'b1111;end
+        endcase
+    end
+endmodule

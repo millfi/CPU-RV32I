@@ -1,0 +1,39 @@
+module decoder (
+    input logic [31:0] inst,
+    output logic [4:0] rs1,rs2,rd,
+    output logic [31:0] signImm
+);
+    logic [6:0] op;
+    logic [6:0] imm1;
+    logic [4:0] imm2;
+    logic [11:0] immediate;
+    logic flag = 0;
+    assign op = inst[6:0];
+    always_comb begin
+        case (op)
+            7'b1100011: begin imm1 = inst[31:25];imm2 = inst[11:7];rs1 = inst[19:15];rd = inst[11:7];end//BRANCH
+            7'b0000011: begin imm1 = inst[31:25];imm2 = inst[24:20];rs1 = inst[19:15];rd = inst[11:7];end//LOAD
+            7'b0010011: begin   if(inst[14:12] != 3'b001 && inst[14:12] != 3'b101)begin 
+                                    assign imm1 = inst[31:25];
+                                    assign imm2 = inst[24:20];
+                                    assign rs1 = inst[19:15];
+                                    assign rd = inst[11:7];
+                                end else begin 
+                                    assign imm1 = 0;
+                                    assign imm2 = inst[24:20];
+                                    assign rs1 = inst[19:15];
+                                    assign rd = inst[11:7]; 
+                                end//即値演算命令
+                        end
+            7'b0110011: begin rs1 = inst[19:15];rs2 = inst[24:20];rd = inst[11:7]; end//演算命令
+            7'b0100011: begin imm1 = inst[31:25];imm2 = inst[11:7];rs2 = inst[24:20];rs1 = inst[19:15];end//STORE
+            7'b0110111: begin flag = 1; signImm = {inst[31:12],12'h000};rd = inst[11:7];end//LUI
+            default:    begin immediate = 0; rs1 = 0;rs2 = 0;rd = 0; end
+        endcase
+        assign immediate = {imm1, imm2};
+        if(flag == 1'b0)begin
+            assign signImm = {{20{immediate[11]}},immediate};
+        end
+    end
+    
+endmodule
